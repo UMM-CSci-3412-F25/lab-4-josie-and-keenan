@@ -41,13 +41,36 @@ void process_directory(const char* path) {
    * with a matching call to chdir() to move back out of it when you're
    * done.
    */
+   num_dirs++;  // Update number of directories seen
+    if (chdir(path) != 0) { //
+        return;
+    }
+    chdir(path);
+    DIR *dirp = opendir(path);
+    
+
+    struct dirent *entry;
+    while((entry = readdir(dirp)) != NULL) {
+        const char namedir = entry->d_name;  // Making a new variable to check for "." and ".." cases
+        if(namedir == '.' || namedir == "..") continue;
+        process_path(entry); // continue reading the path
+    }
+
+    chdir("..");
+    
 }
+    
+
 
 void process_file(const char* path) {
   /*
    * Update the number of regular files.
    * This is as simple as it seems. :-)
    */
+  struct stat s;
+  if (stat(path, &s) == 0 && S_ISREG(s.st_mode)) {
+    num_regular++;
+  }
 }
 
 void process_path(const char* path) {
