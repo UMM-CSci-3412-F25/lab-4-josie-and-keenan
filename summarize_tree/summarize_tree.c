@@ -16,9 +16,17 @@ bool is_dir(const char* path) {
    * return value from stat() in case there is a problem, e.g., maybe the
    * the file doesn't actually exist.
    */
+  struct stat buf;
+  int isDirectory = stat(path, &buf);
+  if(isDirectory == 0) {
+    return S_ISDIR(buf.st_mode);
+  }
+  else {
+    return false;
+  }
 }
 
-/* 
+/*
  * I needed this because the multiple recursion means there's no way to
  * order them so that the definitions all precede the cause.
  */
@@ -36,6 +44,19 @@ void process_directory(const char* path) {
    * with a matching call to chdir() to move back out of it when you're
    * done.
    */
+   if (is_dir(path)) {
+    chdir(path);
+     num_dirs++;
+     DIR *dir = opendir(".");
+     struct dirent *file;
+     while((file = readdir(dir)) != NULL) {
+        if(strcmp(file->d_name, ".") != 0 && strcmp(file->d_name, "..") != 0) {
+            process_path(file->d_name);
+        }
+     }
+     closedir(dir);
+     chdir("..");
+   }
 }
 
 void process_file(const char* path) {
@@ -43,6 +64,10 @@ void process_file(const char* path) {
    * Update the number of regular files.
    * This is as simple as it seems. :-)
    */
+  struct stat s;
+  if (stat(path, &s) == 0 && S_ISREG(s.st_mode)) {
+    num_regular++;
+  }
 }
 
 void process_path(const char* path) {
